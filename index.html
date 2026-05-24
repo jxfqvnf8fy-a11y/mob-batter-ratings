@@ -615,7 +615,7 @@
           <button class="mode-button" type="button" data-mode="hr">HR Rating</button>
         </div>
       </label>
-      <label class="checkbox-control"><input id="hideNotPlaying" type="checkbox"> Hide not in lineup</label>
+      <label class="checkbox-control"><input id="hideNotPlaying" type="checkbox"> Hide NA</label>
       <button class="clear-button" id="clearFilters" type="button">Clear</button>
       <button class="overview-button" id="overviewOpen" type="button">Overview</button>
     </div>
@@ -658,6 +658,10 @@
         <article class="overview-card">
           <h3>Sort Modes</h3>
           <p>Batter Rating sorts for overall hitter matchup quality. HR Rating sorts for power and home-run profile.</p>
+        </article>
+        <article class="overview-card">
+          <h3>Lineup Status</h3>
+          <p>C = confirmed in lineup. NA = not active/not in lineup. UNK = lineup unavailable or not posted yet.</p>
         </article>
         <p class="overview-note">These are transparent ranking scores, not guaranteed probabilities. The goal is to surface strong spots quickly, then let you compare hitter quality, game context, and market information together.</p>
       </div>
@@ -769,7 +773,7 @@
 
     function formatCell(key, value) {
       if (value === "" || value === null || value === undefined) return "";
-      if (key === "lineup_status") return lineupBadge(value);
+      if (key === "lineup_status") return lineupBadge(value, true);
       if (key === "hr_rating" || key === "pitcher_rating" || key === "team_model_score" || key === "weather_rating" || key === "bullpen_rating") return `<span class="rating-readout">${Number(value).toFixed(1)}<span class="rating-dot ${ratingClass(value)}"></span></span>`;
       if (key === "batter_rating") return `<span class="rating ${ratingClass(value)}">${Number(value).toFixed(1)}</span>`;
       if (key === "model_pick_margin") return Number(value).toFixed(1);
@@ -789,8 +793,16 @@
       return "unknown";
     }
 
-    function lineupBadge(value) {
-      return `<span class="lineup-badge ${lineupClass(value)}">${value}</span>`;
+    function lineupLabel(value, expanded = false) {
+      const status = String(value || "");
+      const className = lineupClass(status);
+      if (expanded) return className === "confirmed" ? "C - Confirmed" : className === "out" ? "NA - Not active" : "UNK - Unknown";
+      return className === "confirmed" ? "C" : className === "out" ? "NA" : "UNK";
+    }
+
+    function lineupBadge(value, expanded = false) {
+      const label = lineupLabel(value, expanded);
+      return `<span class="lineup-badge ${lineupClass(value)}" title="${String(value)}">${label}</span>`;
     }
 
     function formatGameTime(value) {
@@ -808,7 +820,7 @@
       if (key === "primary_rating") return formatCell(ratingModes[ratingMode].key, row[ratingModes[ratingMode].key]);
       if (key === "batter_name") {
         const logo = row.batter_team_logo_url ? `<img class="team-logo" src="${row.batter_team_logo_url}" alt="">` : "";
-        const status = row.lineup_status && row.lineup_status !== "Lineup unavailable" ? lineupBadge(row.lineup_status) : "";
+        const status = row.lineup_status ? lineupBadge(row.lineup_status) : "";
         return `<span class="player">${logo}<span>${formatCell(key, row[key])}</span>${status}</span>`;
       }
       return formatCell(key, row[key]);
