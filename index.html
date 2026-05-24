@@ -243,10 +243,14 @@
       line-height: 1.1;
     }
     .matchup-meta {
+      display: grid;
+      gap: 5px;
+      margin-top: 8px;
+    }
+    .matchup-meta-row {
       display: flex;
       flex-wrap: wrap;
       gap: 5px;
-      margin-top: 8px;
     }
     .matchup-tag {
       display: inline-flex;
@@ -893,7 +897,7 @@
         const timeLabel = gameTime ? `<span class="game-time">${gameTime}</span>` : "";
         const active = selectedGameKey === key ? " active" : "";
         const playerPanel = selectedGameKey === key ? renderGamePanel(key, matchup) : "";
-        return `<button class="matchup-card${active}" type="button" data-game-key="${key}"><strong><span>${matchup}</span>${timeLabel}</strong><span class="matchup-meta"><span class="matchup-tag"><span>O/U</span><span>${overUnder}</span></span>${totalLeanLabel}${favoriteLabel}${modelLabel}</span></button>${playerPanel}`;
+        return `<button class="matchup-card${active}" type="button" data-game-key="${key}"><strong><span>${matchup}</span>${timeLabel}</strong><span class="matchup-meta"><span class="matchup-meta-row"><span class="matchup-tag"><span>O/U</span><span>${overUnder}</span></span>${totalLeanLabel}</span><span class="matchup-meta-row">${favoriteLabel}${modelLabel}</span></span></button>${playerPanel}`;
       }).join("");
       container.innerHTML = allBattersCard + gameCards;
       container.querySelectorAll(".matchup-card").forEach(card => {
