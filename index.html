@@ -334,6 +334,10 @@
       width: 46px;
       text-align: center;
     }
+    td.status-cell, th.status-cell {
+      width: 62px;
+      text-align: right;
+    }
     .expand-button {
       width: 28px;
       height: 28px;
@@ -397,6 +401,18 @@
       align-items: center;
       gap: 8px;
       min-width: 0;
+    }
+    .player-text {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .player-start-time {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 650;
+      line-height: 1.1;
     }
     .team-logo {
       width: 24px;
@@ -549,6 +565,10 @@
       th:nth-child(4), td:nth-child(4) {
         display: none;
       }
+      td.status-cell, th.status-cell {
+        width: 48px;
+        text-align: right;
+      }
       th, td {
         padding: 8px 7px;
       }
@@ -700,6 +720,7 @@
       ["primary_rating", "Rating", "num"],
       ["batter_name", "Player", ""],
       ["matchup", "Matchup", ""],
+      ["lineup_status", "Status", "status-cell"],
     ];
     const detailGroups = [
       ["Matchup", [
@@ -818,10 +839,12 @@
 
     function formatSummaryCell(key, row) {
       if (key === "primary_rating") return formatCell(ratingModes[ratingMode].key, row[ratingModes[ratingMode].key]);
+      if (key === "lineup_status") return lineupBadge(row[key]);
       if (key === "batter_name") {
         const logo = row.batter_team_logo_url ? `<img class="team-logo" src="${row.batter_team_logo_url}" alt="">` : "";
-        const status = row.lineup_status ? lineupBadge(row.lineup_status) : "";
-        return `<span class="player">${logo}<span>${formatCell(key, row[key])}</span>${status}</span>`;
+        const gameTime = formatGameTime(row.game_time_utc);
+        const timeLabel = gameTime ? `<span class="player-start-time">${gameTime}</span>` : "";
+        return `<span class="player">${logo}<span class="player-text"><span>${formatCell(key, row[key])}</span>${timeLabel}</span></span>`;
       }
       return formatCell(key, row[key]);
     }
