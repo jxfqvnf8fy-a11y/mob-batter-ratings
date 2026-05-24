@@ -266,6 +266,12 @@
       font-weight: 800;
       text-transform: uppercase;
     }
+    .matchup-tag.muted {
+      opacity: 0.58;
+    }
+    .matchup-tag.muted span:first-child {
+      color: var(--muted);
+    }
     .matchup-separator {
       color: var(--muted);
     }
@@ -881,12 +887,11 @@
         const modelPick = gameRows.find(row => row.model_pick)?.model_pick || "";
         const projectedTotal = gameRows.find(row => row.projected_total !== "")?.projected_total;
         const totalLean = gameRows.find(row => row.total_lean)?.total_lean || "";
-        const projectedMargin = gameRows.find(row => row.model_projected_margin !== "")?.model_projected_margin;
         const favoriteLabel = favorite ? `<span class="matchup-tag"><span>Market</span><span>${favorite}</span></span>` : "";
-        const marginText = Number.isFinite(Number(projectedMargin)) ? ` by ${Number(projectedMargin).toFixed(1)}` : "";
-        const modelLabel = modelPick ? `<span class="matchup-tag"><span>Pick</span><span>${modelPick}${marginText}</span></span>` : "";
+        const modelLabel = modelPick ? `<span class="matchup-tag"><span>Pick</span><span>${modelPick}</span></span>` : "";
         const projectedTotalLabel = Number.isFinite(Number(projectedTotal)) ? `<span class="matchup-tag"><span>Proj</span><span>${Number(projectedTotal).toFixed(1)}</span></span>` : "";
-        const totalLeanLabel = totalLean ? `<span class="matchup-tag"><span>Total</span><span>${totalLean}</span></span>` : "";
+        const hasTotalLean = totalLean === "Over" || totalLean === "Under";
+        const totalLeanLabel = `<span class="matchup-tag${hasTotalLean ? "" : " muted"}"><span>Total</span><span>${totalLean || "No lean"}</span></span>`;
         const timeLabel = gameTime ? `<span class="game-time">${gameTime}</span>` : "";
         const active = selectedGameKey === key ? " active" : "";
         const playerPanel = selectedGameKey === key ? renderGamePanel(key, matchup) : "";
