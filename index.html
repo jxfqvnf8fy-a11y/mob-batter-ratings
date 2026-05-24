@@ -890,10 +890,10 @@
         const favorite = String(runLine).match(/\b([A-Z]{2,3})\s+-1\.5/)?.[1] || "";
         const modelPick = gameRows.find(row => row.model_pick)?.model_pick || "";
         const totalLean = gameRows.find(row => row.total_lean)?.total_lean || "";
-        const favoriteLabel = favorite ? `<span class="matchup-tag"><span>Market</span><span>${favorite}</span></span>` : "";
-        const modelLabel = modelPick ? `<span class="matchup-tag"><span>Model</span><span>${modelPick}</span></span>` : "";
+        const favoriteLabel = favorite ? `<span class="matchup-tag"><span>Market ML</span><span>${favorite}</span></span>` : "";
+        const modelLabel = modelPick ? `<span class="matchup-tag"><span>Model ML</span><span>${modelPick}</span></span>` : "";
         const hasTotalLean = totalLean === "Over" || totalLean === "Under";
-        const totalLeanLabel = `<span class="matchup-tag${hasTotalLean ? "" : " muted"}"><span>Total</span><span>${totalLean || "No lean"}</span></span>`;
+        const totalLeanLabel = `<span class="matchup-tag${hasTotalLean ? "" : " muted"}"><span>Model Total</span><span>${totalLean || "No lean"}</span></span>`;
         const timeLabel = gameTime ? `<span class="game-time">${gameTime}</span>` : "";
         const active = selectedGameKey === key ? " active" : "";
         const playerPanel = selectedGameKey === key ? renderGamePanel(key, matchup) : "";
