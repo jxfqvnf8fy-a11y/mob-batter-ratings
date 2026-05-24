@@ -885,17 +885,15 @@
         const gameTime = formatGameTime(gameRows.find(row => row.game_time_utc)?.game_time_utc);
         const favorite = String(runLine).match(/\b([A-Z]{2,3})\s+-1\.5/)?.[1] || "";
         const modelPick = gameRows.find(row => row.model_pick)?.model_pick || "";
-        const projectedTotal = gameRows.find(row => row.projected_total !== "")?.projected_total;
         const totalLean = gameRows.find(row => row.total_lean)?.total_lean || "";
         const favoriteLabel = favorite ? `<span class="matchup-tag"><span>Market</span><span>${favorite}</span></span>` : "";
-        const modelLabel = modelPick ? `<span class="matchup-tag"><span>Pick</span><span>${modelPick}</span></span>` : "";
-        const projectedTotalLabel = Number.isFinite(Number(projectedTotal)) ? `<span class="matchup-tag"><span>Proj</span><span>${Number(projectedTotal).toFixed(1)}</span></span>` : "";
+        const modelLabel = modelPick ? `<span class="matchup-tag"><span>Model</span><span>${modelPick}</span></span>` : "";
         const hasTotalLean = totalLean === "Over" || totalLean === "Under";
         const totalLeanLabel = `<span class="matchup-tag${hasTotalLean ? "" : " muted"}"><span>Total</span><span>${totalLean || "No lean"}</span></span>`;
         const timeLabel = gameTime ? `<span class="game-time">${gameTime}</span>` : "";
         const active = selectedGameKey === key ? " active" : "";
         const playerPanel = selectedGameKey === key ? renderGamePanel(key, matchup) : "";
-        return `<button class="matchup-card${active}" type="button" data-game-key="${key}"><strong><span>${matchup}</span>${timeLabel}</strong><span class="matchup-meta"><span class="matchup-tag"><span>O/U</span><span>${overUnder}</span></span>${projectedTotalLabel}${totalLeanLabel}${favoriteLabel}${modelLabel}</span></button>${playerPanel}`;
+        return `<button class="matchup-card${active}" type="button" data-game-key="${key}"><strong><span>${matchup}</span>${timeLabel}</strong><span class="matchup-meta"><span class="matchup-tag"><span>O/U</span><span>${overUnder}</span></span>${totalLeanLabel}${favoriteLabel}${modelLabel}</span></button>${playerPanel}`;
       }).join("");
       container.innerHTML = allBattersCard + gameCards;
       container.querySelectorAll(".matchup-card").forEach(card => {
