@@ -606,8 +606,8 @@
           <p>Simple run/HR environment score from game-time temperature and wind speed. It helps HR Rating and lightly informs Model Pick.</p>
         </article>
         <article class="overview-card">
-          <h3>Edge</h3>
-          <p>Market/run-line side. This comes from the sportsbook line and is separate from our model.</p>
+          <h3>Market</h3>
+          <p>Sportsbook/run-line side. This comes from the betting market and is separate from our model.</p>
         </article>
         <article class="overview-card">
           <h3>Pick</h3>
@@ -806,7 +806,7 @@
         const gameTime = formatGameTime(gameRows.find(row => row.game_time_utc)?.game_time_utc);
         const favorite = String(runLine).match(/\b([A-Z]{2,3})\s+-1\.5/)?.[1] || "";
         const modelPick = gameRows.find(row => row.model_pick)?.model_pick || "";
-        const favoriteLabel = favorite ? `<span class="matchup-tag"><span>Edge</span><span>${favorite}</span></span>` : "";
+        const favoriteLabel = favorite ? `<span class="matchup-tag"><span>Market</span><span>${favorite}</span></span>` : "";
         const modelLabel = modelPick ? `<span class="matchup-tag"><span>Pick</span><span>${modelPick}</span></span>` : "";
         const timeLabel = gameTime ? `<span class="game-time">${gameTime}</span>` : "";
         const active = selectedMatchup === matchup ? " active" : "";
