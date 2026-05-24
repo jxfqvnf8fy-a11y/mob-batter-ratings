@@ -182,6 +182,25 @@
       font-weight: 700;
       letter-spacing: 0;
     }
+    .slate-actions {
+      margin: 0 0 10px;
+    }
+    .all-games-button {
+      min-height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 7px 12px;
+      background: var(--panel);
+      color: var(--ink);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 750;
+    }
+    .all-games-button:hover,
+    .all-games-button.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
     .matchups {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -250,6 +269,19 @@
     }
     .matchup-separator {
       color: var(--muted);
+    }
+    .game-player-panel {
+      grid-column: 1 / -1;
+      margin: 0 0 6px;
+    }
+    .game-player-panel .table-wrap {
+      max-height: none;
+    }
+    .game-player-title {
+      margin: 4px 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
     }
     .table-wrap {
       overflow: auto;
@@ -591,9 +623,12 @@
   </div>
   <main>
     <h2 class="section-title">Scheduled Games for 2026-05-24</h2>
+    <div class="slate-actions">
+      <button class="all-games-button active" id="allGamesButton" type="button">All Games</button>
+    </div>
     <section class="matchups" id="matchupCards" aria-label="Today's matchups">
     </section>
-    <div class="table-wrap">
+    <div class="table-wrap" id="allGamesTable">
       <table>
         <thead>
           <tr id="headerRow"></tr>
@@ -663,6 +698,8 @@
       body: document.getElementById("bodyRows"),
       modeButtons: document.querySelectorAll(".mode-button"),
       clearFilters: document.getElementById("clearFilters"),
+      allGamesButton: document.getElementById("allGamesButton"),
+      allGamesTable: document.getElementById("allGamesTable"),
       overviewOpen: document.getElementById("overviewOpen"),
       overviewClose: document.getElementById("overviewClose"),
       overviewPanel: document.getElementById("overviewPanel")
@@ -714,12 +751,13 @@
       return formatCell(key, row[key]);
     }
 
-    function filteredRows() {
+    function filteredRows(matchupOverride) {
       const query = state.search.value.trim().toLowerCase();
+      const matchupFilter = matchupOverride === undefined ? selectedMatchup : matchupOverride;
       return rows.filter(row => {
         const blob = `${row.batter_name} ${row.batter_team} ${row.matchup} ${row.probable_pitcher_name} ${row.venue_name}`.toLowerCase();
         return (!query || blob.includes(query))
-          && (!selectedMatchup || row.matchup === selectedMatchup)
+          && (!matchupFilter || row.matchup === matchupFilter)
           && (!state.venue.value || row.venue_name === state.venue.value)
           && (!state.homeAway.value || row.home_away === state.homeAway.value);
       }).sort((a, b) => {
@@ -730,14 +768,16 @@
       });
     }
 
-    function renderHeader() {
-      const header = document.getElementById("headerRow");
-      header.innerHTML = summaryColumns.map(([key, label, cls]) => {
+    function headerHtml() {
+      return summaryColumns.map(([key, label, cls]) => {
         const sortColumn = key === "primary_rating" ? ratingModes[ratingMode].key : key;
         const headerLabel = key === "primary_rating" ? ratingModes[ratingMode].label : label;
         return `<th class="${cls}" data-key="${sortColumn}">${headerLabel}${sortColumn === sortKey ? (sortDir === -1 ? " ↓" : " ↑") : ""}</th>`;
       }).join("");
-      header.querySelectorAll("th").forEach(th => {
+    }
+
+    function bindHeaderSort(container) {
+      container.querySelectorAll("th").forEach(th => {
         th.addEventListener("click", () => {
           const key = th.dataset.key;
           if (key === "expand") return;
@@ -749,6 +789,12 @@
           render();
         });
       });
+    }
+
+    function renderHeader() {
+      const header = document.getElementById("headerRow");
+      header.innerHTML = headerHtml();
+      bindHeaderSort(header);
     }
 
     function renderMatchupCards() {
@@ -764,7 +810,8 @@
         const modelLabel = modelPick ? `<span class="matchup-tag"><span>Pick</span><span>${modelPick}</span></span>` : "";
         const timeLabel = gameTime ? `<span class="game-time">${gameTime}</span>` : "";
         const active = selectedMatchup === matchup ? " active" : "";
-        return `<button class="matchup-card${active}" type="button" data-matchup="${matchup}"><strong><span>${matchup}</span>${timeLabel}</strong><span class="matchup-meta"><span class="matchup-tag"><span>O/U</span><span>${overUnder}</span></span>${favoriteLabel}${modelLabel}</span></button>`;
+        const playerPanel = selectedMatchup === matchup ? renderGamePanel(matchup) : "";
+        return `<button class="matchup-card${active}" type="button" data-matchup="${matchup}"><strong><span>${matchup}</span>${timeLabel}</strong><span class="matchup-meta"><span class="matchup-tag"><span>O/U</span><span>${overUnder}</span></span>${favoriteLabel}${modelLabel}</span></button>${playerPanel}`;
       }).join("");
       container.querySelectorAll(".matchup-card").forEach(card => {
         card.addEventListener("click", () => {
@@ -772,14 +819,15 @@
           render();
         });
       });
+      bindHeaderSort(container);
+      bindExpandButtons(container);
     }
 
-    function renderBody(data) {
+    function rowsHtml(data) {
       if (!data.length) {
-        state.body.innerHTML = `<tr><td colspan="${summaryColumns.length}" class="empty">No hitters match the current filters.</td></tr>`;
-        return;
+        return `<tr><td colspan="${summaryColumns.length}" class="empty">No hitters match the current filters.</td></tr>`;
       }
-      state.body.innerHTML = data.map(row => {
+      return data.map(row => {
         const rowId = `${row.batter_name}|${row.batter_team}|${row.matchup}|${row.probable_pitcher_name}`;
         const isOpen = expandedRows.has(rowId);
         const summary = summaryColumns.map(([key, label, cls]) => {
@@ -796,7 +844,10 @@
         }).join("");
         return `<tr>${summary}</tr>${isOpen ? `<tr class="details-row"><td colspan="${summaryColumns.length}"><div class="details">${details}</div></td></tr>` : ""}`;
       }).join("");
-      state.body.querySelectorAll(".expand-button").forEach(button => {
+    }
+
+    function bindExpandButtons(container) {
+      container.querySelectorAll(".expand-button").forEach(button => {
         button.addEventListener("click", () => {
           const rowId = button.dataset.rowId;
           if (expandedRows.has(rowId)) expandedRows.delete(rowId);
@@ -806,12 +857,24 @@
       });
     }
 
+    function renderGamePanel(matchup) {
+      const data = filteredRows(matchup);
+      return `<div class="game-player-panel"><div class="game-player-title">${matchup} Players</div><div class="table-wrap"><table><thead><tr>${headerHtml()}</tr></thead><tbody>${rowsHtml(data)}</tbody></table></div></div>`;
+    }
+
+    function renderBody(data) {
+      state.body.innerHTML = rowsHtml(data);
+      bindExpandButtons(state.body);
+    }
+
     function render() {
       const data = filteredRows();
       renderHeader();
       renderMatchupCards();
       state.modeButtons.forEach(button => button.classList.toggle("active", button.dataset.mode === ratingMode));
-      renderBody(data);
+      state.allGamesButton.classList.toggle("active", !selectedMatchup);
+      state.allGamesTable.style.display = selectedMatchup ? "none" : "";
+      if (!selectedMatchup) renderBody(data);
     }
 
     [state.search, state.venue, state.homeAway].forEach(control => {
@@ -832,6 +895,11 @@
       state.search.value = "";
       state.venue.value = "";
       state.homeAway.value = "";
+      selectedMatchup = "";
+      render();
+    });
+
+    state.allGamesButton.addEventListener("click", () => {
       selectedMatchup = "";
       render();
     });
