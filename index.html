@@ -674,7 +674,7 @@
         </article>
         <article class="overview-card">
           <h3>Lineup Status</h3>
-          <p>A = active/confirmed in lineup. NA = not active/not in lineup. UNK = lineup unavailable or not posted yet.</p>
+          <p>A = active/confirmed in lineup. NA = not active/not in lineup. TBD = lineup unavailable or not posted yet.</p>
         </article>
         <p class="overview-note">These are transparent ranking scores, not guaranteed probabilities. The goal is to surface strong spots quickly, then let you compare hitter quality, game context, and market information together.</p>
       </div>
@@ -810,8 +810,8 @@
     function lineupLabel(value, expanded = false) {
       const status = String(value || "");
       const className = lineupClass(status);
-      if (expanded) return className === "confirmed" ? "A - Active" : className === "out" ? "NA - Not active" : "UNK - Unknown";
-      return className === "confirmed" ? "A" : className === "out" ? "NA" : "UNK";
+      if (expanded) return className === "confirmed" ? "A - Active" : className === "out" ? "NA - Not active" : "TBD - Lineup TBD";
+      return className === "confirmed" ? "A" : className === "out" ? "NA" : "TBD";
     }
 
     function lineupBadge(value, expanded = false) {
