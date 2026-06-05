@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Today's MLB Matchup Dashboard</title>
+  <title>Today's MLB Matchups</title>
   <style>
     :root {
       color-scheme: dark;
@@ -232,14 +232,21 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 28px;
+      min-width: 22px;
       border: 1px solid var(--line);
       border-radius: 999px;
-      padding: 2px 7px;
+      padding: 1px 6px;
       color: var(--muted);
       background: var(--panel-2);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 850;
+      line-height: 1.25;
+    }
+    .view-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
     }
     .view-card:hover,
     .view-card.active {
@@ -357,6 +364,9 @@
     .pitcher-panel .table-wrap {
       max-height: min(620px, calc(100vh - 260px));
     }
+    .bvp-panel .table-wrap {
+      max-height: min(620px, calc(100vh - 260px));
+    }
     .game-player-title {
       display: flex;
       flex-wrap: wrap;
@@ -392,6 +402,8 @@
     .table-wrap {
       overflow: auto;
       max-height: calc(100vh - 210px);
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -613,6 +625,10 @@
       .matchups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .view-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .table-wrap { max-height: none; }
+      .pitcher-panel .table-wrap,
+      .bvp-panel .table-wrap {
+        max-height: min(620px, calc(100vh - 230px));
+      }
     }
     @media (max-width: 640px) {
       body {
@@ -676,6 +692,11 @@
         max-height: none;
         overflow-x: auto;
       }
+      .pitcher-panel .table-wrap,
+      .bvp-panel .table-wrap {
+        max-height: calc(100vh - 260px);
+        overflow: auto;
+      }
       table {
         min-width: 0;
       }
@@ -721,7 +742,7 @@
 </head>
 <body>
   <header>
-    <h1>Today's MLB Matchup Dashboard</h1>
+    <h1>Today's MLB Matchups</h1>
     <div class="controls">
       <label>Games
         <select id="gameFilter"><option value="">All games</option><option value="SF @ CHC|2026-06-05T18:20:00Z">SF @ CHC · 2:20 PM ET</option>
@@ -1232,6 +1253,51 @@
       }
     }
 
+    function bindAxisLockedScroll(container) {
+      container.querySelectorAll(".table-wrap").forEach(wrap => {
+        let startX = 0;
+        let startY = 0;
+        let startLeft = 0;
+        let startTop = 0;
+        let axis = "";
+
+        wrap.addEventListener("touchstart", event => {
+          if (event.touches.length !== 1) return;
+          const touch = event.touches[0];
+          startX = touch.clientX;
+          startY = touch.clientY;
+          startLeft = wrap.scrollLeft;
+          startTop = wrap.scrollTop;
+          axis = "";
+        }, { passive: true });
+
+        wrap.addEventListener("touchmove", event => {
+          if (event.touches.length !== 1) return;
+          const touch = event.touches[0];
+          const dx = touch.clientX - startX;
+          const dy = touch.clientY - startY;
+          const absX = Math.abs(dx);
+          const absY = Math.abs(dy);
+
+          if (!axis && Math.max(absX, absY) > 8) {
+            axis = absX > absY ? "x" : "y";
+          }
+          if (!axis) return;
+
+          event.preventDefault();
+          if (axis === "x") {
+            wrap.scrollLeft = startLeft - dx;
+          } else {
+            wrap.scrollTop = startTop - dy;
+          }
+        }, { passive: false });
+
+        wrap.addEventListener("touchend", () => {
+          axis = "";
+        }, { passive: true });
+      });
+    }
+
     function bindModeButtons(container) {
       container.querySelectorAll(".mode-button").forEach(button => {
         if (button.classList.contains("pitcher-mode-button")) return;
@@ -1259,7 +1325,7 @@
       const container = document.getElementById("viewCards");
       container.innerHTML = viewOptions.map(view => {
         const isOpen = selectedViewKey === view.key;
-        return `<button class="view-card${isOpen ? " active" : ""}" type="button" data-view-key="${view.key}"><span>${view.label}</span><span class="card-right"><span class="view-count">${viewCount(view.key)}</span><span class="card-toggle">${isOpen ? "−" : "+"}</span></span></button>`;
+        return `<button class="view-card${isOpen ? " active" : ""}" type="button" data-view-key="${view.key}"><span class="view-label"><span>${view.label}</span><span class="view-count">${viewCount(view.key)}</span></span><span class="card-right"><span class="card-toggle">${isOpen ? "−" : "+"}</span></span></button>`;
       }).join("");
       container.querySelectorAll(".view-card").forEach(card => {
         card.addEventListener("click", () => {
@@ -1319,6 +1385,7 @@
       bindModeButtons(container);
       bindPitcherModeButtons(container);
       bindPanelSearch(container);
+      bindAxisLockedScroll(container);
     }
 
     function rowsHtml(data) {
@@ -1369,7 +1436,7 @@
 
     function renderBvpPanel() {
       const data = bvpRows();
-      return `<div class="game-player-panel"><div class="game-player-title">BvP Rankings</div>${panelSearchHtml("Batter, pitcher, team, or matchup")}<div class="table-wrap"><table class="bvp-table"><thead><tr><th>Rank</th><th>Batter</th><th>Team</th><th>Matchup</th><th>Time</th><th>Pitcher</th><th>BvP Rating</th><th>PA</th><th>Hits</th><th>AVG</th><th>HR vs P</th><th>HR Rating</th></tr></thead><tbody>${bvpRowsHtml(data)}</tbody></table></div></div>`;
+      return `<div class="game-player-panel bvp-panel"><div class="game-player-title">BvP Rankings</div>${panelSearchHtml("Batter, pitcher, team, or matchup")}<div class="table-wrap"><table class="bvp-table"><thead><tr><th>Rank</th><th>Batter</th><th>Team</th><th>Matchup</th><th>Time</th><th>Pitcher</th><th>BvP Rating</th><th>PA</th><th>Hits</th><th>AVG</th><th>HR vs P</th><th>HR Rating</th></tr></thead><tbody>${bvpRowsHtml(data)}</tbody></table></div></div>`;
     }
 
     function render() {
